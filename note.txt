@@ -71,3 +71,8 @@ def lambda_handler(event, context):
                 'error': str(e)
             })
         }
+
+----
+git add .
+git commit -m "v1"
+git push
