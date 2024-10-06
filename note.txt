@@ -1,4 +1,12 @@
 
+
+
+AS2 使用App模式 ，在網頁新增創建好的U R L可以進行複製
+出現error 回應給相關團隊
+進入 jiahao 的串流URL
+新增版本歷史記錄
+
+----
 該如何登入驗證成功後，根據下方代碼中指定的 Stacks和Fleets的AppStream 2.0 CreateStreamingURL，並提取使用者登入時輸入的電子郵件，同時將此用戶輸入的email作為Appstream2.0創建串流URL的User ID，最後將用此userid創建好的 URL進行登入後的重定向
 將下方代碼將上方前端代碼進行整合，並整理完整不會報錯的代碼，使用繁體回答
 
