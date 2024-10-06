@@ -1,0 +1,73 @@
+
+該如何登入驗證成功後，根據下方代碼中指定的 Stacks和Fleets的AppStream 2.0 CreateStreamingURL，並提取使用者登入時輸入的電子郵件，同時將此用戶輸入的email作為Appstream2.0創建串流URL的User ID，最後將用此userid創建好的 URL進行登入後的重定向
+將下方代碼將上方前端代碼進行整合，並整理完整不會報錯的代碼，使用繁體回答
+
+
+
+jiahaoliu@metaage.com.tw
+
+https://appstream2.ap-northeast-1.aws.amazon.com/authenticate?parameters=eyJ0eXBlIjoiRU5EX1VTRVIiLCJleHBpcmVzIjoiMTcyODE0NTIzOCIsImF3c0FjY291bnRJZCI6IjY0NzM1MDM0MDU1OCIsInVzZXJJZCI6ImppYWhhb2xpdUBtZXRhYWdlLmNvbS50dyIsImNhdGFsb2dTb3VyY2UiOiJzdGFjay9EZXNrdG9wIiwiZmxlZXRSZWYiOiJmbGVldC9EZXNrdG9wIiwiYXBwbGljYXRpb25JZCI6IiIsInVzZXJDb250ZXh0IjoiIiwibWF4VXNlckR1cmF0aW9uSW5TZWNzIjoiNTc2MDAifQ%3D%3D&signature=uUkJ2Z97WyVGea%2BpBI4bKPfavFkTHth7zhjK3OExLCo%3D
+
+
+
+unichen@metaage.com.tw
+https://appstream2.ap-northeast-1.aws.amazon.com/authenticate?parameters=eyJ0eXBlIjoiRU5EX1VTRVIiLCJleHBpcmVzIjoiMTcyODE0NTMyMSIsImF3c0FjY291bnRJZCI6IjY0NzM1MDM0MDU1OCIsInVzZXJJZCI6InVuaWNoZW5AbWV0YWFnZS5jb20udHciLCJjYXRhbG9nU291cmNlIjoic3RhY2svRGVza3RvcCIsImZsZWV0UmVmIjoiZmxlZXQvRGVza3RvcCIsImFwcGxpY2F0aW9uSWQiOiIiLCJ1c2VyQ29udGV4dCI6IiIsIm1heFVzZXJEdXJhdGlvbkluU2VjcyI6IjU3NjAwIn0%3D&signature=I%2BAQogw4QwzUWr4Sgea0GdOTQin%2BfRFUL3hK2tVN%2BFY%3D
+
+
+生成as2 url
+----
+import json
+import boto3
+
+def lambda_handler(event, context):
+    appstream_client = boto3.client('appstream', region_name='ap-northeast-1')
+
+    # 從 Cognito 授權資訊中提取 email
+    if 'requestContext' in event and 'authorizer' in event['requestContext'] and 'claims' in event['requestContext']['authorizer']:
+        user_email = event['requestContext']['authorizer']['claims'].get('email', 'default_test_user@example.com')
+    else:
+        # 如果無法從 Cognito 提取 email，使用預設值
+        user_email = 'default_test_user@example.com'
+        print("Using default email:", user_email)
+
+    # 使用 email 作為 user_id
+    user_id = user_email
+    print(json.dumps(event))
+
+    # 從事件中獲取其他參數
+    stack_name = event.get('queryStringParameters', {}).get('stackName', 'Desktop')  # 默認為 'Desktop'
+    fleet_name = event.get('queryStringParameters', {}).get('fleetName', 'Desktop')  # 默認為 'Desktop'
+
+    try:
+        # 創建 Streaming URL
+        response = appstream_client.create_streaming_url(
+            StackName=stack_name,
+            FleetName=fleet_name,
+            UserId=user_id,
+            Validity=3600  # URL 有效期（秒）
+        )
+
+        # 獲取生成的 Streaming URL
+        streaming_url = response['StreamingURL']
+
+        print(f"Streaming URL generated for {user_id}: {streaming_url}")
+
+        # 返回 302 重定向到 Streaming URL
+        return {
+            'statusCode': 302,
+            'headers': {
+                'Location': streaming_url,  # 設置重定向目標 URL
+                'Access-Control-Allow-Origin': '*'  # 允許跨域
+            },
+            'body': ''
+        }
+
+    except Exception as e:
+        # 錯誤處理
+        print(f"Error generating streaming URL for {user_id}: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': str(e)
+            })
+        }

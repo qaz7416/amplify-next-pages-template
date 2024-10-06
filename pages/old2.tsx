@@ -29,8 +29,6 @@ export default function Home() {
     // 清除本地存儲中的 token 或其他認證信息  
     localStorage.removeItem('authToken'); // 假設 token 存儲在 localStorage 中  
     sessionStorage.clear(); // 清除 sessionStorage  
-    // 重置 userEmail 狀態  
-    setUserEmail(null);  
     // 其他需要清除的認證信息  
 
     signOut(); // 調用 signOut 以登出  
@@ -41,8 +39,9 @@ export default function Home() {
       {({ signOut, user }) => {  
         if (user) {  
           const email = user.signInDetails?.loginId;  
-          if (email && userEmail !== email) {  
+          if (email && userEmail === null) {  
             setUserEmail(email);  
+            console.log('User email:', email);  
           }  
         }  
 
